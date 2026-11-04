@@ -86,10 +86,32 @@ La app no termina con un traceback: muestra un mensaje y devuelve un código de 
 | Error de red o timeout | `LLMConnectionError` | 1 |
 | Otro error HTTP del proveedor (401, 500, ...) | `LLMError` | 1 |
 
+## Pruebas
+
+**Tests automáticos** (no usan la red ni API keys: reemplazan los SDK por fakes):
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+Cubren las validaciones de pydantic (`tests/test_schemas.py`), la selección de proveedor y el camino feliz con streaming (`tests/test_manager.py`) y la traducción de errores de rate limit, red y HTTP, tanto al iniciar la llamada como en medio del streaming (`tests/test_errors.py`).
+
+**Prueba de conexión real con OpenAI** (requiere `OPENAI_API_KEY` y consume créditos mínimos):
+
+```bash
+python test_openai_connection.py
+python test_openai_connection.py --prompt "Contá hasta 5"
+```
+
+Imprime la respuesta en streaming y, al final, la cantidad de fragmentos y los tiempos. Termina con código 0 si funcionó y 1 si falló.
+
 ## Estructura
 
 ```
-main.py            Script de prueba (CLI)
+main.py                    Script de prueba (CLI)
+test_openai_connection.py  Prueba manual de la conexión real con OpenAI
+tests/                     Tests automáticos (pytest)
 llm_manager.py     AsyncLLMManager: elige el proveedor y delega en su cliente
 schemas.py         Esquemas pydantic (GenerationParams, Settings, Provider)
 exceptions.py      Excepciones controladas
