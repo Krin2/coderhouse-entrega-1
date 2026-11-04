@@ -18,6 +18,7 @@ class AnthropicClient(BaseLLMClient):
         return anthropic.AsyncAnthropic(api_key=api_key)
 
     async def chat(self, params: GenerationParams) -> AsyncIterator[str]:
+        # En Anthropic la instrucción de sistema es un argumento aparte, no un mensaje.
         optional_args = {}
         if params.system_prompt:
             optional_args["system"] = params.system_prompt
@@ -28,6 +29,7 @@ class AnthropicClient(BaseLLMClient):
         if params.top_p is not None:
             sampling_params["top_p"] = params.top_p
 
+        # El context manager cierra la conexión aunque se corte el stream.
         async with self._client.messages.stream(
             model=self.model,
             messages=[{"role": "user", "content": params.prompt}],

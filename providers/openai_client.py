@@ -18,6 +18,7 @@ class OpenAIClient(BaseLLMClient):
         return openai.AsyncOpenAI(api_key=api_key)
 
     async def chat(self, params: GenerationParams) -> AsyncIterator[str]:
+        # En OpenAI la instrucción de sistema es un mensaje más de la lista.
         messages = []
         if params.system_prompt:
             messages.append({"role": "system", "content": params.system_prompt})
@@ -35,6 +36,7 @@ class OpenAIClient(BaseLLMClient):
             stream=True,
             **optional_args,
         )
+        # Cada evento trae un delta de texto; se ignoran los que vienen vacíos.
         async for stream_event in response_stream:
             if stream_event.choices and stream_event.choices[0].delta.content:
                 yield stream_event.choices[0].delta.content

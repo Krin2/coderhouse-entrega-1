@@ -34,6 +34,8 @@ class BaseLLMClient(ABC):
 
     async def generate(self, params: GenerationParams) -> AsyncIterator[str]:
         """Genera la respuesta en streaming, devolviendo fragmentos con yield."""
+        # Envuelve el stream del proveedor y traduce los errores de su SDK a
+        # excepciones propias; el orden importa (de más a menos específico).
         try:
             async for chunk in self.chat(params):
                 yield chunk

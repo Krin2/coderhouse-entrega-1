@@ -19,6 +19,7 @@ class AsyncLLMManager:
     """Selecciona el cliente según el proveedor indicado y delega en él."""
 
     def __init__(self, provider: str | Provider | None = None, settings: Settings | None = None):
+        # El proveedor explícito gana; si no, se usa LLM_PROVIDER del .env.
         self.settings = settings or Settings.from_env(str(provider) if provider else None)
         self.provider = Provider(provider) if provider else self.settings.provider
         self.client = self._select_client()
@@ -42,6 +43,7 @@ class AsyncLLMManager:
             ),
         }
         client_class, api_key, model_name, api_key_env_var = provider_setup[self.provider]
+        # Falla temprano, con un mensaje claro, si falta la clave del proveedor elegido.
         if not api_key:
             raise LLMConfigError(f"Falta {api_key_env_var} en el entorno (.env).")
         return client_class(api_key=api_key, model=model_name)

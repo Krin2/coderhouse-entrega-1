@@ -35,6 +35,8 @@ class Settings(BaseModel):
 
     @classmethod
     def from_env(cls, provider: str | None = None) -> "Settings":
+        # Lee el .env y arma los valores; solo pisa los modelos si están definidos,
+        # así se conservan los defaults del esquema.
         load_dotenv()
         env_values = {
             "provider": provider or os.getenv("LLM_PROVIDER") or Provider.OPENAI,

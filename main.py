@@ -26,6 +26,8 @@ def parse_args() -> argparse.Namespace:
 
 
 async def run(args: argparse.Namespace) -> int:
+    """Valida los argumentos, consulta al modelo y devuelve el código de salida."""
+    # 1) Pydantic valida los rangos antes de tocar la red (código 2 si fallan).
     try:
         params = GenerationParams(
             prompt=args.prompt,
@@ -41,9 +43,11 @@ async def run(args: argparse.Namespace) -> int:
             print(f"  - {field}: {issue['msg']}", file=sys.stderr)
         return 2
 
+    # 2) El manager elige el proveedor; los errores controlados no muestran traceback.
     try:
         manager = AsyncLLMManager(provider=args.provider)
         print(f"[{manager.provider.value} / {manager.client.model}]")
+        # Cada fragmento se imprime apenas llega (flush=True evita el buffering).
         async for text_chunk in manager.generate(params):
             print(text_chunk, end="", flush=True)
         print()
