@@ -20,14 +20,8 @@ class GenerationParams(BaseModel):
     prompt: str = Field(min_length=1, description="Texto de la consulta")
     system_prompt: str | None = Field(default=None, description="Instrucción de sistema")
     temperature: float = Field(default=1.0, ge=0.0, le=2.0)
-    max_tokens: int = Field(default=1024, gt=0, le=32768)
+    max_tokens: int = Field(default=512, gt=0, le=1024)
     top_p: float | None = Field(default=None, gt=0.0, le=1.0)
-
-    def temperature_for(self, provider: Provider) -> float:
-        """Anthropic solo admite temperatura 0-1; se limita para ese proveedor."""
-        if provider is Provider.ANTHROPIC:
-            return min(self.temperature, 1.0)
-        return self.temperature
 
 
 class Settings(BaseModel):
@@ -42,13 +36,13 @@ class Settings(BaseModel):
     @classmethod
     def from_env(cls, provider: str | None = None) -> "Settings":
         load_dotenv()
-        data = {
+        env_values = {
             "provider": provider or os.getenv("LLM_PROVIDER") or Provider.OPENAI,
             "openai_api_key": os.getenv("OPENAI_API_KEY") or None,
             "anthropic_api_key": os.getenv("ANTHROPIC_API_KEY") or None,
         }
-        if m := os.getenv("OPENAI_MODEL"):
-            data["openai_model"] = m
-        if m := os.getenv("ANTHROPIC_MODEL"):
-            data["anthropic_model"] = m
-        return cls(**data)
+        if openai_model := os.getenv("OPENAI_MODEL"):
+            env_values["openai_model"] = openai_model
+        if anthropic_model := os.getenv("ANTHROPIC_MODEL"):
+            env_values["anthropic_model"] = anthropic_model
+        return cls(**env_values)
