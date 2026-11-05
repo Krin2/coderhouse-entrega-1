@@ -100,8 +100,8 @@ Cubren las validaciones de pydantic (`tests/test_schemas.py`), la selección de 
 **Prueba de conexión real con OpenAI** (requiere `OPENAI_API_KEY` y consume créditos mínimos):
 
 ```bash
-python test_openai_connection.py
-python test_openai_connection.py --prompt "Contá hasta 5"
+python test_script.py
+python test_script.py --prompt "Contá hasta 5"
 ```
 
 Imprime la respuesta en streaming y, al final, la cantidad de fragmentos y los tiempos. Termina con código 0 si funcionó y 1 si falló.
@@ -110,7 +110,7 @@ Imprime la respuesta en streaming y, al final, la cantidad de fragmentos y los t
 
 ```
 main.py                    Script de prueba (CLI)
-test_openai_connection.py  Prueba manual de la conexión real con OpenAI
+test_script.py             Prueba manual de la conexión real con OpenAI
 tests/                     Tests automáticos (pytest)
 llm_manager.py     AsyncLLMManager: elige el proveedor y delega en su cliente
 schemas.py         Esquemas pydantic (GenerationParams, Settings, Provider)
