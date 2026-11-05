@@ -28,7 +28,7 @@ def test_usa_el_proveedor_de_settings_si_no_se_indica():
 
 
 def test_proveedor_desconocido():
-    with pytest.raises(ValueError):
+    with pytest.raises(LLMConfigError, match="'gemini' no soportado"):
         AsyncLLMManager(provider="gemini", settings=SETTINGS)
 
 

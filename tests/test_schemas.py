@@ -3,6 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
+from exceptions import LLMConfigError, LLMValidationError
 from schemas import GenerationParams, Provider, Settings
 
 
@@ -67,3 +68,34 @@ def test_settings_from_env(monkeypatch):
     assert settings.provider == Provider.ANTHROPIC
     assert settings.anthropic_model == "mi-modelo"
     assert settings.openai_api_key is None
+
+
+@pytest.mark.parametrize(
+    ("data", "fragmento"),
+    [
+        ({"prompt": "  "}, "no puede estar vacío"),
+        ({"prompt": "Hola", "temperature": 3}, "temperature debe estar entre 0 y 2 (recibido: 3)"),
+        ({"prompt": "Hola", "temperature": "mucha"}, "temperature debe ser un número"),
+        ({"prompt": "Hola", "max_tokens": 5000}, "max_tokens debe estar entre 1 y 1024"),
+        ({"prompt": "Hola", "max_tokens": "x"}, "max_tokens debe ser un número entero"),
+        ({"prompt": "Hola", "top_p": 0}, "top_p debe ser mayor que 0"),
+    ],
+)
+def test_validated_da_mensajes_especificos(data, fragmento):
+    with pytest.raises(LLMValidationError) as caught:
+        GenerationParams.validated(**data)
+    assert any(fragmento in message for message in caught.value.messages)
+    assert isinstance(caught.value.__cause__, ValidationError)
+
+
+def test_validated_junta_varios_errores():
+    with pytest.raises(LLMValidationError) as caught:
+        GenerationParams.validated(prompt="", temperature=9, max_tokens=0)
+    assert len(caught.value.messages) == 3
+
+
+def test_from_env_con_provider_invalido(monkeypatch):
+    monkeypatch.setattr("schemas.load_dotenv", lambda: None)
+    monkeypatch.setenv("LLM_PROVIDER", "gemini")
+    with pytest.raises(LLMConfigError, match="'gemini' no soportado"):
+        Settings.from_env()

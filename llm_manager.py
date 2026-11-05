@@ -2,7 +2,7 @@
 
 from collections.abc import AsyncIterator
 
-from exceptions import LLMConfigError, LLMConnectionError, LLMError, LLMRateLimitError
+from exceptions import LLMConfigError, LLMConnectionError, LLMError, LLMRateLimitError, LLMValidationError
 from providers import AnthropicClient, BaseLLMClient, OpenAIClient
 from schemas import GenerationParams, Provider, Settings
 
@@ -12,6 +12,7 @@ __all__ = [
     "LLMConnectionError",
     "LLMError",
     "LLMRateLimitError",
+    "LLMValidationError",
 ]
 
 
@@ -21,7 +22,13 @@ class AsyncLLMManager:
     def __init__(self, provider: str | Provider | None = None, settings: Settings | None = None):
         # El proveedor explícito gana; si no, se usa LLM_PROVIDER del .env.
         self.settings = settings or Settings.from_env(str(provider) if provider else None)
-        self.provider = Provider(provider) if provider else self.settings.provider
+        try:
+            self.provider = Provider(provider) if provider else self.settings.provider
+        except ValueError as error:
+            options = ", ".join(p.value for p in Provider)
+            raise LLMConfigError(
+                f"Proveedor {str(provider)!r} no soportado. Opciones: {options}."
+            ) from error
         self.client = self._select_client()
 
     def _select_client(self) -> BaseLLMClient:

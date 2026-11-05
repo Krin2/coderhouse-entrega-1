@@ -21,7 +21,7 @@ async def main(prompt: str) -> int:
     try:
         manager = AsyncLLMManager(provider="openai")
         print(f"Conectando con OpenAI (modelo {manager.client.model})...")
-        params = GenerationParams(prompt=prompt, temperature=0.2, max_tokens=100)
+        params = GenerationParams.validated(prompt=prompt, temperature=0.2, max_tokens=100)
 
         start = time.perf_counter()
         first_chunk_at = None

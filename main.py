@@ -4,9 +4,7 @@ import argparse
 import asyncio
 import sys
 
-from pydantic import ValidationError
-
-from llm_manager import AsyncLLMManager, LLMError
+from llm_manager import AsyncLLMManager, LLMError, LLMValidationError
 from schemas import GenerationParams, Provider
 
 
@@ -27,20 +25,20 @@ def parse_args() -> argparse.Namespace:
 
 async def run(args: argparse.Namespace) -> int:
     """Valida los argumentos, consulta al modelo y devuelve el código de salida."""
-    # 1) Pydantic valida los rangos antes de tocar la red (código 2 si fallan).
+    # 1) Pydantic valida los rangos antes de tocar la red; cada problema sale con
+    # un mensaje específico (código 2 si fallan).
     try:
-        params = GenerationParams(
+        params = GenerationParams.validated(
             prompt=args.prompt,
             system_prompt=args.system_prompt,
             temperature=args.temperature,
             max_tokens=args.max_tokens,
             top_p=args.top_p,
         )
-    except ValidationError as error:
+    except LLMValidationError as error:
         print("Parámetros inválidos:", file=sys.stderr)
-        for issue in error.errors():
-            field = ".".join(str(part) for part in issue["loc"])
-            print(f"  - {field}: {issue['msg']}", file=sys.stderr)
+        for message in error.messages:
+            print(f"  - {message}", file=sys.stderr)
         return 2
 
     # 2) El manager elige el proveedor; los errores controlados no muestran traceback.
